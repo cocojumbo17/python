@@ -69,10 +69,10 @@ class Matrix:
     def __str__(self):
         res_str = ''
         for i in range(self.dimension()):
-            res_str += f'|'
+            res_str += '|'
             for j in range(self.dimension()):
                 res_str += f'{self.matrix()[i][j]:4} '
-            res_str += f'|\n'
+            res_str += '|\n'
         return res_str
 
 
@@ -105,8 +105,8 @@ def initMatrixFromFile(filename):
 
 
 def main():
-#    m1 = initMatrix()
-    m1 = initMatrixFromFile('2.matrix')
+ #   m1 = initMatrix()
+    m1 = initMatrixFromFile('1.matrix')
     print('matrix is:')
     print(m1)
     print(f'determinant is {m1.determinant()}')
