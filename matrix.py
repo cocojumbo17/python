@@ -85,23 +85,30 @@ def initMatrix():
             m.el(i, j, value)
     return m
 
-def initMatrixFromFile(filepath):
-    m = Matrix(2)
+def initMatrixFromFile(filename):
+    f = open(filename, 'r')
+    first_line = True;
+    cur_line=0
+    for s in f:
+        l = s.split()
+        if len(l) > 1:
+            if first_line:
+                first_line = False
+                m = Matrix(len(l))
+            cur_row = 0
+            for item in l:
+                value = float(item)
+                m.el(cur_line, cur_row, value)
+                cur_row += 1
+            cur_line += 1
     return m
 
 
 def main():
-    m1 = initMatrix()
+#    m1 = initMatrix()
+    m1 = initMatrixFromFile('2.matrix')
     print('matrix is:')
     print(m1)
     print(f'determinant is {m1.determinant()}')
-    # m2 = m1.transpose()
-    # print('transpose matrix is:')
-    # print(m2)
-    #
-    # m3=m2.minor(0,0)
-    # print('minor00 of transpose matrix is:')
-    # print(m3)
-
 
 if __name__ == '__main__': main()
