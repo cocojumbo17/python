@@ -1,3 +1,4 @@
+import getpass
 from copy import copy
 
 
@@ -108,6 +109,10 @@ def initMatrixFromFile(filename):
     f.close()
     return initMatrixFromText(string)
 
+def test():
+    print('start')
+    pas = getpass.getpass('your password:')
+    print(pas)
 
 def main():
 #    m1 = initMatrix()
@@ -116,4 +121,4 @@ def main():
     print(m1)
     print(f'determinant is {m1.determinant()}')
 
-if __name__ == '__main__': main()
+if __name__ == '__main__': test()
