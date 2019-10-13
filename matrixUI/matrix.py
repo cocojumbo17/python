@@ -14,6 +14,19 @@ class Matrix:
                 temp.el(i, j, self.el(i, j))
         return temp
 
+    def multiply(self, koef):
+        """
+        multiply matrix to number
+        :param koef: float number
+        :return: new matrix
+        """
+        temp = Matrix(self.dimension())
+        for i in range(self.dimension()):
+            for j in range(self.dimension()):
+                temp.el(i, j, self.el(i, j) * koef)
+        return temp
+
+
     def dimension(self):
         return self._dimension
 
@@ -23,10 +36,22 @@ class Matrix:
     def el(self, x, y, val=None):
         if x >= self.dimension() or y >= self.dimension():
             raise TypeError(f'indexes should be < {self.dimension()}')
-        if val is not None: self.matrix()[x][y] = val
+        if val is not None:
+            self.matrix()[x][y] = val
         return self.matrix()[x][y]
 
+    def row(self, r, val=None):
+        if r >= self.dimension():
+            raise TypeError(f'row should be < {self.dimension()}')
+        if val is not None:
+            self.matrix()[r] = val
+        return self.matrix()[r]
+
     def transpose(self):
+        """
+        make transpose matrix
+        :return: new transpose matrix
+        """
         temp = Matrix(self.dimension())
         for i in range(self.dimension()):
             for j in range(self.dimension()):
@@ -34,6 +59,12 @@ class Matrix:
         return temp
 
     def minor(self, r, c):
+        """
+        find minor of mathix
+        :param r: row
+        :param c: column
+        :return: return new matrix without row and column
+        """
         temp = Matrix(self._dimension - 1)
         d_row=0
         for row in range(self.dimension()):
@@ -49,22 +80,70 @@ class Matrix:
         return temp
 
     def determinant(self):
+        """
+        find determinant of matrix
+        :return: float number
+        """
         if self.dimension() == 2:
             return self.el(0,0)*self.el(1,1) - self.el(0,1)*self.el(1,0)
         else:
-            temp = self.makeFirstColumnZero()
+            temp,sign = self.makeFirstColumnZero()
             minor = temp.minor(0,0)
-            return temp.el(0,0) * minor.determinant()
+            return sign * temp.el(0,0) * minor.determinant()
+
+    def inverse(self):
+        """
+        find inverse matrix
+        :return: return new inverse matrix
+        """
+        det = self.determinant()
+        if det == 0:
+            raise TypeError('determinant is zero. impossible to find inverse matrix')
+        comp = self.complement()
+        trans_comp = comp.transpose()
+        im = trans_comp.multiply(1/det)
+        return im
+
+    def complement(self):
+        """
+        find algebraic complement to current matrix
+        :return: new algebraic complement matrix
+        """
+        acm = Matrix(self.dimension())
+        for i in range(self.dimension()):
+            for j in range(self.dimension()):
+                minor = self.minor(i, j)
+                minor_det = minor.determinant()
+                sign = -1
+                if (i+j)%2 == 0:
+                    sign = 1
+                acm.el(i,j,sign*minor_det)
+        return acm
+
 
     def makeFirstColumnZero(self):
+        """
+        try to make first column of matrix make zero
+        :return: new matrix with zero first column
+        """
         temp = copy(self)
-        if temp.el(0,0) == 0: raise TypeError('first element is zero')
+        found = False
+        if temp.el(0,0) == 0:
+            for y in range(1,temp.dimension()):
+                if temp.el(y, 0) != 0:
+                    found=True
+                    buf = temp.row(0);
+                    temp.row(0, temp.row(y))
+                    temp.row(y, buf)
+                    break
+            if not found:
+                return [temp, 1]
         for row in range(1, temp.dimension()):
             k = -(temp.el(row, 0) / temp.el(0, 0))
             for col in range(temp.dimension()):
                 new_val = temp.el(row, col) + k*temp.el(0, col)
                 temp.el(row, col, new_val)
-        return temp
+        return [temp, -1 if found else 1]
 
 
     def __str__(self):
@@ -72,7 +151,7 @@ class Matrix:
         for i in range(self.dimension()):
             res_str += f'|'
             for j in range(self.dimension()):
-                res_str += f'{self.matrix()[i][j]:4} '
+                res_str += f'{self.matrix()[i][j]:10.5} '
             res_str += f'|\n'
         return res_str
 
@@ -116,9 +195,12 @@ def test():
 
 def main():
 #    m1 = initMatrix()
-    m1 = initMatrixFromFile('2.matrix')
+    m1 = initMatrixFromFile('4.matrix')
     print('matrix is:')
     print(m1)
     print(f'determinant is {m1.determinant()}')
+    invers = m1.inverse()
+    print('inverse matrix is:')
+    print(invers)
 
-if __name__ == '__main__': test()
+if __name__ == '__main__': main()
