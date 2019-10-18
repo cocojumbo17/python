@@ -12,7 +12,7 @@ def matryoshka(n):
 def rect(a,b,c,d,w):
     for m,n in (a,b), (b,c), (c,d), (d,a):
         gr.Line(gr.Point(*m), gr.Point(*n)).draw(w)
-
+#-------------------------------------------------------
 def fractal(a,b,c,d,n,k,w):
     if (n==0):
         return
@@ -29,8 +29,29 @@ def draw_fractal():
     fractal((100,100),(500,100),(500,500),(100,500),50,k,win)
     win.getMouse()
     win.close()
+#-------------------------------------------------------
+def gcd(a, b):
+    """найбільший спільний дільник"""
+    if b == 0:
+        return a
+    a=a%b
+    return gcd(b,a)
+#-------------------------------------------------------
+
+def generate_number(ss, n, pref=[]):
+    if n == 0:
+        print(pref)
+        return
+    for d in range(ss):
+        pref.append(d)
+        generate_number(ss, n-1, pref)
+        pref.pop()
+
+
 
 def main():
-    draw_fractal()
-
+    #matryoshka(5)
+    #draw_fractal()
+    #print(gcd(12,1024))
+    generate_number(4,3)
 if __name__ == '__main__':main()
