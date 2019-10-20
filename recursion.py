@@ -40,7 +40,7 @@ def gcd(a, b):
 
 def generate_number(ss, n, pref=[]):
     if n == 0:
-        print(pref)
+        print(*pref, sep=',')
         return
     for d in range(ss):
         pref.append(d)
@@ -53,5 +53,5 @@ def main():
     #matryoshka(5)
     #draw_fractal()
     #print(gcd(12,1024))
-    generate_number(4,3)
+    generate_number(5,3)
 if __name__ == '__main__':main()
