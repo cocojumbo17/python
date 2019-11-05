@@ -54,4 +54,5 @@ def main():
     #draw_fractal()
     #print(gcd(12,1024))
     generate_number(4,3)
+    input()
 if __name__ == '__main__':main()
