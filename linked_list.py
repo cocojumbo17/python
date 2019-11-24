@@ -191,14 +191,16 @@ def executeCommand(command, ll):
 
 def main():
     N = int(input('Number of elements N='))
-    str_elements = input('Elements are:')
-    all_elements = str_elements.split()
-    if len(all_elements) != N:
-        print('Incorrect number of elements')
-        return
     our_list = LinkedList()
-    for el in all_elements:
-        our_list.push(float(el))
+
+    if N>0:
+        str_elements = input('Elements are:')
+        all_elements = str_elements.split()
+        if len(all_elements) != N:
+            print('Incorrect number of elements')
+            return
+        for el in all_elements:
+            our_list.push(float(el))
 
     M = int(input('Number of commands M='))
     for i in range(M):
@@ -213,4 +215,4 @@ def main():
     our_list.print()
 
 
-main()
+if __name__ == '__main__':main()

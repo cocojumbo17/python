@@ -35,29 +35,26 @@ def merge_bottomup(arr):
         temp_arr.clear()
         width *= 2
 
-
-def main():
-    a = input().split()
-
-
+def convert_input(data_list):
     data_type = 0
     try:
-        b = int(a[0])
+        b = int(data_list[0])
         data_type = 1
     except ValueError:
         try:
-            b = float(a[0])
+            b = float(data_list[0])
             data_type = 2
         except ValueError:
             data_type = 0
-
-
-    for i in range(len(a)):
-        if data_type==1:
-            a[i] = int(a[i])
+    for i in range(len(data_list)):
+        if data_type == 1:
+            data_list[i] = int(data_list[i])
         elif data_type == 2:
-            a[i] = float(a[i])
+            data_list[i] = float(data_list[i])
 
+def main():
+    a = input().split()
+    convert_input(a)
 
     a1 = [10, 7, 20, 9,248, 5, 6, 4, 3, 2, 4, -3 , -44,7, 0,10, 7, 20, 9, 5, 6, 4, 3, 2, 4, 7, 0,10, 7, 20, 9, 5, 6, 4, 3, 2, 4, 7, 0,10, 7, 20, 9, 5, 6, 4, 3, 2, 4, 7, 0,10, 7, 20, 9, 5, 6, 4, 3, 2, 4, 7, 0,10, 7, 20, 9, 5, 6, 4, 3, 2, 4, 7, 0,10, 7, 20, 9, 5, 6, 4, 3, 2, 4, 7, 0,10, 7, 20, 9, 5, 6, 4, 3, 2, 4, 7, 0,10, 7, 20, 9, 5, 6, 4, 3, 2, 4, 7, 0,10, 7, 20, 9, 5, 6, 4, 3, 2, 4, 7, 0,10, 7, 20, 9, 5, 6, 4, 3, 2, 4, 7, 0,10, 7, 20, 9, 5, 6, 4, 3, 2, 4, 7, 0,10, 7, 20, 9, 5, 6, 4, 3, 2, 4, 7, 0,10, 7, 20, 9, 5, 6, 4, 3, 2, 4, 7, 0,10, 7, 20, 9, 5, 6, 4, 3, 2, 4, 7, 0,10, 7, 20, 9, 5, 6, 4, 3, 2, 4, 7, 0,10, 7, 20, 9, 5, 6, 4, 3, 2, 4, 7, 0,10, 7, 20, 9, 5, 6, 4, 3, 2, 4, 7, 0,10, 7, 20, 9, 5, 6, 4, 3, 2, 4, 7, 0,10, 7, 20, 9, 5, 6, 4, 3, 2, 4, 7, 0,10, 7, 20, 9, 5, 6, 4, 3, 2, 4, 7, 0,10, 7, 20, 9, 5, 6, 4, 3, 2, 4, 7, 0,]
     a2 = [5, 4, 3, 2, 1]
