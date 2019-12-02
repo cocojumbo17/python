@@ -120,16 +120,32 @@ def print_coeffs(synapses):
         print(f'{k[0]}->{k[1]}: W={curr["W"]}', end=' ')
     print()
 
+
+def create_neurons(res_layer, neuron_numbers, neurons):
+    v_index=0
+    curr_layer=0
+    parent_v = []
+    for n in neuron_numbers:
+        prev_parent = []
+        for i in range(n):
+            neurons.update({v_index:{'v':parent_v, 'out':0, 'd':0,'layer': curr_layer, 'bias': False}})
+            prev_parent.append(v_index)
+            v_index += 1
+        if curr_layer != res_layer:
+            neurons.update({v_index: {'v': [], 'out': 1, 'd': 0, 'layer': curr_layer, 'bias': True}})
+            prev_parent.append(v_index)
+            v_index += 1
+
+        curr_layer += 1
+        parent_v = prev_parent
+
+
+
 def ns():
     res_layer = 2
-    neurons = {0: {'v': [], 'out': 0, 'd': 0, 'layer': 0, 'bias': False},
-               1: {'v': [], 'out': 0, 'd': 0, 'layer': 0, 'bias': False},
-               2: {'v': [], 'out': 1, 'd': 0, 'layer': 0, 'bias': True},
-               3: {'v': [0, 1, 2], 'out': 0, 'd': 0, 'layer': 1, 'bias': False},
-               4: {'v': [0, 1, 2], 'out': 0, 'd': 0, 'layer': 1, 'bias': False},
-               5: {'v': [], 'out': 1, 'd': 0, 'layer': 1, 'bias': True},
-               6: {'v': [3, 4, 5], 'out': 0, 'd': 0, 'layer': 2, 'bias': False},
-               }
+    neuron_numbers = [2,4,1]
+    neurons={}
+    create_neurons(res_layer, neuron_numbers, neurons)
     synapses = {}
     for k in neurons:
         if neurons[k].get('v'):
@@ -143,12 +159,12 @@ def ns():
     training_input = [[0, 0], [0, 1], [1, 0], [1, 1]]
     training_output = [[0], [1], [1], [0]]
     print('start learning')
-    for epoha in range(10000):
+    for epoha in range(1000):
         for i in range(4):
             run_ns_down(training_input[i], neurons, synapses)
             error = calc_error(training_output[i], neurons, res_layer)
             res = get_results(neurons, res_layer)
-            #print(f'input={training_input[i]} output={res} error={error}')
+            print(f'input={training_input[i]} output={res} error={error}')
             run_ns_up(training_output[i], neurons, inverted_neurons, synapses, res_layer)
         if epoha % 100 == 0:
             print('.', end='')
