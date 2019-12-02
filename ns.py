@@ -1,5 +1,6 @@
 import random
 import math
+import pickle
 
 
 def r():
@@ -8,10 +9,6 @@ def r():
 
 def sigmoid(x):
     return 1 / (1 + math.exp(-x))
-
-
-def sigmoid_det(x):
-    return (1 - x) * x
 
 
 def run_ns_down(ins, neurons, synapses):
@@ -121,14 +118,15 @@ def print_coeffs(synapses):
     print()
 
 
-def create_neurons(res_layer, neuron_numbers, neurons):
-    v_index=0
-    curr_layer=0
+def create_neurons(neuron_numbers, neurons):
+    res_layer = len(neuron_numbers) - 1
+    v_index = 0
+    curr_layer = 0
     parent_v = []
     for n in neuron_numbers:
         prev_parent = []
         for i in range(n):
-            neurons.update({v_index:{'v':parent_v, 'out':0, 'd':0,'layer': curr_layer, 'bias': False}})
+            neurons.update({v_index: {'v': parent_v, 'out': 0, 'd': 0, 'layer': curr_layer, 'bias': False}})
             prev_parent.append(v_index)
             v_index += 1
         if curr_layer != res_layer:
@@ -140,21 +138,19 @@ def create_neurons(res_layer, neuron_numbers, neurons):
         parent_v = prev_parent
 
 
+def learn_ns(neurons, synapses):
+    neuron_numbers = [2, 2, 1]
+    create_neurons(neuron_numbers, neurons)
 
-def ns():
-    res_layer = 2
-    neuron_numbers = [2,4,1]
-    neurons={}
-    create_neurons(res_layer, neuron_numbers, neurons)
-    synapses = {}
     for k in neurons:
         if neurons[k].get('v'):
             for v in neurons[k].get('v'):
                 synapse_key = (v, k)
                 synapses.update({synapse_key: {'dW': 0, 'W': r()}})
-    #print(synapses)
+    # print(synapses)
+    res_layer = len(neuron_numbers) - 1
     inverted_neurons = invert_neurons(neurons, res_layer)
-    #print(inverted_neurons)
+    # print(inverted_neurons)
 
     training_input = [[0, 0], [0, 1], [1, 0], [1, 1]]
     training_output = [[0], [1], [1], [0]]
@@ -169,6 +165,25 @@ def ns():
         if epoha % 100 == 0:
             print('.', end='')
     print('\nfinish learning')
+
+
+def save_to_file(neurons, synapses, file_name):
+    f = open(file_name, 'wb')
+    #store = {'n':neurons, 's':synapses}
+    pickle.dump(neurons, f)
+    pickle.dump(synapses, f)
+    f.close()
+
+
+def load_from_file(file_name):
+    f = open(file_name, 'rb')
+    neurons = pickle.load(f)
+    synapses = pickle.load(f)
+    f.close()
+    return neurons, synapses
+
+def user_input(neurons, synapses):
+    res_layer = neurons[len(neurons) - 1]['layer']
     print_coeffs(synapses)
     is_exit = False
     while not is_exit:
@@ -181,4 +196,18 @@ def ns():
             res = get_results(neurons, res_layer)
             print(f'result is {round(res[0])}')
 
-ns()
+
+def ns(with_learning, file_name):
+    neurons = {}
+    synapses = {}
+    if with_learning:
+        learn_ns(neurons, synapses)
+        save_to_file(neurons, synapses, file_name)
+    else:
+        neurons, synapses = load_from_file(file_name)
+    user_input(neurons, synapses)
+
+def main():
+    ns(True, 'myns.txt')
+
+if __name__ == '__main__':main()
