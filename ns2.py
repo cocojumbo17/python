@@ -2,10 +2,12 @@ import random
 import math
 import pickle
 
-speed_of_learing = 0.4
-moment_of_learing = 0.5
+from skimage import io
+
+speed_of_learing = 0.7
+moment_of_learing = 0.1
 epohas_of_learing = 1000
-neuron_numbers = [625, 9, 2]
+neuron_numbers = [625, 9, 5, 2]
 
 
 def r():
@@ -228,9 +230,26 @@ def ns(with_learning, file_name):
         neurons, synapses = load_from_file(file_name)
     user_input(neurons, synapses)
 
+def test_image(imagefile_name, ns_file_name):
+    image_data = io.imread(imagefile_name, True)
+    pixels = []
+    for i in range(image_data.shape[0]):
+        for j in range(image_data.shape[1]):
+            pixels.append(image_data[i][j])
+    neurons, synapses = load_from_file(ns_file_name)
+    run_ns_down(pixels, neurons, synapses)
+    res = get_results(neurons)
+    str_res = "none"
+    if res[0] > 0.8 and res[1] < 0.2:
+        str_res = "smile"
+    elif res[1] > 0.8 and res[0] < 0.2:
+        str_res = "sad"
+    print('result is ', res, str_res)
+
 
 def main():
-    ns(True, 'myns.txt')
+    #ns(False, 'myns.txt')
+    test_image('test.png', 'image_brain.txt')
 
 
 if __name__ == '__main__': main()
