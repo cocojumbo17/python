@@ -206,7 +206,7 @@ def ns(with_learning, file_name):
 
 
 def main():
-    ns(False, 'myns.txt')
+    ns(True, 'myns.txt')
 
 
 if __name__ == '__main__': main()
