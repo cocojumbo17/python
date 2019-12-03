@@ -12,103 +12,97 @@ def sigmoid(x):
 
 
 def run_ns_down(ins, neurons, synapses):
-    cur_input_index = 0
-    for k in neurons:
-        cur_neuron = neurons[k]
-        input_neurons = cur_neuron['v']
-        if not input_neurons and not cur_neuron['bias']:
-            cur_neuron['out'] = ins[cur_input_index]
-            cur_input_index += 1
+    for layer in neurons:
+        curr_layer = neurons[layer]
+        if layer == 0:
+            cur_input_index = 0
+            for neuron in curr_layer:
+                curr_neuron = curr_layer[neuron]
+                if not curr_neuron['bias']:
+                    curr_neuron['output'] = ins[cur_input_index]
+                    cur_input_index += 1
         else:
+            prev_layer = neurons[layer-1]
             inp = 0
-            for from_neuron in input_neurons:
-                w = synapses[(from_neuron, k)].get('W')
-                val = neurons[from_neuron].get('out')
-                inp += w * val
-            cur_neuron['out'] = sigmoid(inp)
+            for neuron in curr_layer:
+                curr_neuron = curr_layer[neuron]
+                if curr_neuron['bias']:
+                    continue
+                for neuron2 in prev_layer:
+                    prev_neuron = prev_layer[neuron2]
+                    w = synapses[(neuron2, neuron)]['W']
+                    val = prev_neuron['output']
+                    inp += w * val
+                curr_neuron['output'] = sigmoid(inp)
 
 
-def calc_error(outs, neurons, res_layer):
+def calc_error(outs, neurons):
+    layer_index = len(neurons)-1
+    last_layer = neurons[layer_index]
     num_out = 0
-    sum = 0
-    for k in neurons:
-        cur_neuron = neurons[k]
-        if res_layer == cur_neuron.get('layer'):
-            sum += (outs[num_out] - cur_neuron.get('out')) ** 2
-            num_out += 1
-    return sum / num_out
+    acc = 0
+    for n in last_layer:
+        curr_neuron = last_layer[n]
+        acc += (outs[num_out] - curr_neuron['output']) ** 2
+        num_out += 1
+    return acc / num_out
 
 
-def get_results(neurons, res_layer):
+def get_results(neurons):
     res = []
-    for k in neurons:
-        cur_neuron = neurons[k]
-        if res_layer == cur_neuron.get('layer'):
-            res.append(cur_neuron.get('out'))
+    layer_index = len(neurons)-1
+    last_layer = neurons[layer_index]
+    for n in last_layer:
+        curr_neuron = last_layer[n]
+        res.append(curr_neuron['output'])
     return res
 
 
-def invert_neurons_rec(neurons, index, inverted_neurons):
-    for v in neurons[index].get('v'):
-        inverted_neurons[v]['v'].add(index)
-        invert_neurons_rec(neurons, v, inverted_neurons)
-
-
-def invert_neurons(neurons, res_layer):
-    res = {i: {'v': set(), 'f': False} for i in range(len(neurons))}
-    for k in neurons:
-        if res_layer == neurons[k].get('layer'):
-            invert_neurons_rec(neurons, k, res)
-    return res
-
-
-def run_ns_up_out(res_layer, res, neurons, inverted_neurons):
-    # calc ends at first
+def run_ns_up_out(res, neurons):
+    layer_index = len(neurons)-1
+    last_layer = neurons[layer_index]
     cur_res_index = 0
-    for k in neurons:
-        cur_neuron = neurons[k]
-        if res_layer == cur_neuron.get('layer'):
-            out = cur_neuron.get('out')
-            delta = (res[cur_res_index] - out) * (1 - out) * out
-            cur_neuron['d'] = delta
-            cur_res_index += 1
-            inverted_neurons[k]['f'] = True
+    for n in last_layer:
+        curr_neuron = last_layer[n]
+        out = curr_neuron['output']
+        delta = (res[cur_res_index] - out) * (1 - out) * out
+        curr_neuron['delta'] = delta
+        cur_res_index += 1
 
 
-def run_ns_up_rec(index, res, neurons, inverted_neurons, synapses, res_layer):
-    if inverted_neurons[index].get('f'):
-        return
-    children = inverted_neurons[index].get('v')
-    for v in children:
-        run_ns_up_rec(v, res, neurons, inverted_neurons, synapses, res_layer)
-
+def run_ns_up_for_layer(neurons, synapses, layer):
     speed = 0.7
     moment = 0.3
 
-    out = neurons[index].get('out')
-    acc = 0
-    for v in children:
-        child_delta = neurons[v].get('d')
-        synapse_key = (index, v)
-        w = synapses[synapse_key].get('W')
-        acc += w * child_delta
-        grad = out * child_delta
-        prev_dw = synapses[synapse_key].get('dW')
-        dw = speed * grad + moment * prev_dw
-        synapses[synapse_key]['dW'] = dw
-        synapses[synapse_key]['W'] = w + dw
-    delta = acc * (1 - out) * out
-    neurons[index]['d'] = delta
+    curr_layer = neurons[layer]
+    for n in curr_layer:
+        curr_neuron = curr_layer[n]
+        out = curr_neuron['output']
+        acc = 0
+        next_layer = neurons[layer+1]
+        for n2 in next_layer:
+            next_neuron = next_layer[n2]
+            if next_neuron['bias']:
+                continue
+            delta = next_neuron['delta']
+            synapse_key = (n, n2)
+            w = synapses[synapse_key].get('W')
+            acc += w * delta
+            grad = out * delta
+            prev_dw = synapses[synapse_key]['dW']
+            dw = speed * grad + moment * prev_dw
+            synapses[synapse_key]['dW'] = dw
+            synapses[synapse_key]['W'] = w + dw
+        if not curr_neuron['bias']:
+            delta = acc * (1 - out) * out
+            curr_neuron['delta'] = delta
 
 
-def run_ns_up(res, neurons, inverted_neurons, synapses, res_layer):
-    for k in inverted_neurons:
-        inverted_neurons[k]['f'] = False
-
-    run_ns_up_out(res_layer, res, neurons, inverted_neurons)
-
-    for k in inverted_neurons:
-        run_ns_up_rec(k, res, neurons, inverted_neurons, synapses, res_layer)
+def run_ns_up(res, neurons, synapses):
+    run_ns_up_out(res, neurons)
+    count_layers = len(neurons)-2
+    for layer in range(count_layers, -1, -1):
+        run_ns_up_for_layer(neurons, synapses, layer)
 
 
 def print_coeffs(synapses):
@@ -119,37 +113,42 @@ def print_coeffs(synapses):
 
 
 def create_neurons(neuron_numbers, neurons):
-    res_layer = len(neuron_numbers) - 1
-    v_index = 0
     curr_layer = 0
-    parent_v = []
+    v_index = 0
     for n in neuron_numbers:
-        prev_parent = []
+        layer = {}
         for i in range(n):
-            neurons.update({v_index: {'v': parent_v, 'out': 0, 'd': 0, 'layer': curr_layer, 'bias': False}})
-            prev_parent.append(v_index)
+            layer.update({v_index: {'output': 0, 'delta': 0, 'bias': False}})
             v_index += 1
-        if curr_layer != res_layer:
-            neurons.update({v_index: {'v': [], 'out': 1, 'd': 0, 'layer': curr_layer, 'bias': True}})
-            prev_parent.append(v_index)
+        if curr_layer < len(neuron_numbers) - 1:
+            layer.update({v_index: {'output': 1, 'delta': 0, 'bias': True}})
             v_index += 1
-
+        neurons[curr_layer] = layer
         curr_layer += 1
-        parent_v = prev_parent
+
+
+def create_synapses(neurons, synapses):
+    for layer in neurons:
+        if layer < len(neurons)-1:
+            curr_layer = neurons[layer]
+            next_layer = neurons[layer+1]
+            for curr_neuron in curr_layer:
+                for next_neuron in next_layer:
+                    if next_layer[next_neuron]['bias']:
+                        continue
+                    synapse_key = (curr_neuron, next_neuron)
+                    synapses.update({synapse_key: {'dW': 0, 'W': r()}})
+    #print(synapses)
+
 
 
 def learn_ns(neurons, synapses):
     neuron_numbers = [2, 2, 1]
     create_neurons(neuron_numbers, neurons)
+    create_synapses(neurons, synapses)
 
-    for k in neurons:
-        if neurons[k].get('v'):
-            for v in neurons[k].get('v'):
-                synapse_key = (v, k)
-                synapses.update({synapse_key: {'dW': 0, 'W': r()}})
-    # print(synapses)
-    res_layer = len(neuron_numbers) - 1
-    inverted_neurons = invert_neurons(neurons, res_layer)
+    #res_layer = len(neuron_numbers) - 1
+    #inverted_neurons = invert_neurons(neurons, res_layer)
     # print(inverted_neurons)
 
     training_input = [[0, 0], [0, 1], [1, 0], [1, 1]]
@@ -158,10 +157,10 @@ def learn_ns(neurons, synapses):
     for epoha in range(1000):
         for i in range(4):
             run_ns_down(training_input[i], neurons, synapses)
-            error = calc_error(training_output[i], neurons, res_layer)
-            res = get_results(neurons, res_layer)
+            error = calc_error(training_output[i], neurons)
+            res = get_results(neurons)
             print(f'input={training_input[i]} output={res} error={error}')
-            run_ns_up(training_output[i], neurons, inverted_neurons, synapses, res_layer)
+            run_ns_up(training_output[i], neurons, synapses)
         if epoha % 100 == 0:
             print('.', end='')
     print('\nfinish learning')
@@ -169,7 +168,6 @@ def learn_ns(neurons, synapses):
 
 def save_to_file(neurons, synapses, file_name):
     f = open(file_name, 'wb')
-    #store = {'n':neurons, 's':synapses}
     pickle.dump(neurons, f)
     pickle.dump(synapses, f)
     f.close()
@@ -182,8 +180,8 @@ def load_from_file(file_name):
     f.close()
     return neurons, synapses
 
+
 def user_input(neurons, synapses):
-    res_layer = neurons[len(neurons) - 1]['layer']
     print_coeffs(synapses)
     is_exit = False
     while not is_exit:
@@ -193,7 +191,7 @@ def user_input(neurons, synapses):
         else:
             test_input = list(map(int, inp.split()))
             run_ns_down(test_input, neurons, synapses)
-            res = get_results(neurons, res_layer)
+            res = get_results(neurons)
             print(f'result is {round(res[0])}')
 
 
@@ -207,7 +205,9 @@ def ns(with_learning, file_name):
         neurons, synapses = load_from_file(file_name)
     user_input(neurons, synapses)
 
-def main():
-    ns(True, 'myns.txt')
 
-if __name__ == '__main__':main()
+def main():
+    ns(False, 'myns.txt')
+
+
+if __name__ == '__main__': main()
