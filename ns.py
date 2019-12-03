@@ -2,7 +2,6 @@ import random
 import math
 import pickle
 
-
 def r():
     return 2 * random.random() - 1
 
