@@ -1,12 +1,14 @@
 import random
 import math
 import pickle
+from typing import Optional, Any
+
 import numpy as np
 from skimage import io
 
 speed_of_learing = 0.7
-moment_of_learing = 0.1
-epohas_of_learing = 100
+moment_of_learing = 0.2
+epohas_of_learing = 1000
 neuron_numbers = [625, 9, 5, 2]
 synaptic_weight = []
 synaptic_delta_weight = []
@@ -25,22 +27,15 @@ def sigmoid(x):
 def run_ns_down(learning_index):
     for i in range(len(neuron_numbers)):
         if i == 0:
-            #neurons_outputs[i] = np.append(training_input[learning_index].flatten(),1) # add bias
-            neurons_outputs[i] = training_input[learning_index].flatten()
+            neurons_outputs[i] = np.reshape(training_input[learning_index],[1,-1])
         else:
             neurons_outputs[i] = sigmoid(np.dot(neurons_outputs[i-1], synaptic_weight[i-1]) + biases[i-1])
 
 
-def calc_error(outs, neurons):
-    layer_index = len(neurons) - 1
-    last_layer = neurons[layer_index]
-    num_out = 0
-    acc = 0
-    for n in last_layer:
-        curr_neuron = last_layer[n]
-        acc += (outs[num_out] - curr_neuron['output']) ** 2
-        num_out += 1
-    return acc / num_out
+def calc_error(learning_index):
+    out = get_results()
+    res = np.asarray([training_output[learning_index]])
+    return np.average((res-out)**2)
 
 
 def get_results():
@@ -48,8 +43,8 @@ def get_results():
 
 
 def run_ns_up_out(learning_index):
-    out = np.asarray(training_output[learning_index])
-    res = get_results()
+    res = np.asarray([training_output[learning_index]])
+    out = get_results()
     neurons_deltas[len(neurons_deltas)-1] = (res-out)*(1-out)*out
 
 
@@ -57,21 +52,23 @@ def run_ns_up_for_layer(layer):
     out = neurons_outputs[layer]
     deltas = neurons_deltas[layer+1]
     weights = synaptic_weight[layer]
-    acc = np.sum(weights*deltas)
     prev_dw = synaptic_delta_weight[layer]
-    temp = deltas.T
-    grads = out*np.transpose(deltas)
+
+    acc = np.sum(weights*deltas, axis=1)
+    new_deltas = acc * (1 - out) * out
+
+    temp_delta = np.ones(weights.shape)*deltas
+    grads = out.T*deltas
 
     dw = speed_of_learing * grads + moment_of_learing * prev_dw
     synaptic_delta_weight[layer] = dw
     synaptic_weight[layer] = weights + dw
 
     prev_biases_dw = biases_dw[layer]
-    bdw = speed_of_learing * grads + moment_of_learing * prev_biases_dw
+    bdw = speed_of_learing * deltas + moment_of_learing * prev_biases_dw
     biases_dw[layer] = bdw
     biases[layer] = biases[layer]+bdw
 
-    new_deltas = acc * (1 - out) * out
     neurons_deltas[layer] = new_deltas
 
 
@@ -96,14 +93,11 @@ def create_ns():
         n2 = neuron_numbers[i+1]
         synaptic_weight.append(2*np.random.random((n1,n2))-1)
         synaptic_delta_weight.append(np.zeros((n1,n2)))
-        biases.append(np.random.random((n2)))
-        biases_dw.append(np.zeros((n2)))
-    i=0
+        biases.append(np.random.random((1,n2)))
+        biases_dw.append(np.zeros((1,n2)))
     for n in neuron_numbers:
         neurons_outputs.append(np.zeros((n)))
         neurons_deltas.append(np.zeros((n)))#TODO: remove delta for bias neuron
-        #neurons_outputs[i][n]=1
-        i+=1
 
 
 def read_training_data(file_name):
@@ -117,41 +111,44 @@ def read_training_data(file_name):
 
 def learn_ns():
     create_ns()
-
     print('start learning')
     for epoha in range(epohas_of_learing):
         learning_indexes=list(range(20))
         random.shuffle(learning_indexes)
         for i in learning_indexes:
             run_ns_down(i)
-            #error = calc_error(training_output[i], neurons)
-            #res = get_results(neurons)
-            #print(f'input={training_input[i]} output={res} error={error}')
             run_ns_up(i)
         if epoha % 10 == 0:
             errors=[]
             for j in range(20):
-                run_ns_down(training_input[j], neurons, synapses)
-                errors.append(calc_error(training_output[j], neurons))
+                run_ns_down(j)
+                errors.append(calc_error(j))
             print(f'errors = {errors}')
             #print('.', end='')
 
     print('\nfinish learning')
 
 
-def save_to_file(neurons, synapses, file_name):
+def save_to_file(file_name):
     f = open(file_name, 'wb')
-    pickle.dump(neurons, f)
-    pickle.dump(synapses, f)
+    pickle.dump(synaptic_weight, f)
+    pickle.dump(synaptic_delta_weight, f)
+    pickle.dump(neurons_outputs, f)
+    pickle.dump(neurons_deltas, f)
+    pickle.dump(biases, f)
+    pickle.dump(biases_dw, f)
     f.close()
 
 
 def load_from_file(file_name):
     f = open(file_name, 'rb')
-    neurons = pickle.load(f)
-    synapses = pickle.load(f)
+    synaptic_weight = pickle.load(f)
+    synaptic_delta_weight = pickle.load(f)
+    neurons_outputs = pickle.load(f)
+    neurons_deltas = pickle.load(f)
+    biases = pickle.load(f)
+    biases_dw = pickle.load(f)
     f.close()
-    return neurons, synapses
 
 
 def user_input(neurons, synapses):
@@ -179,10 +176,10 @@ def user_input(neurons, synapses):
 def ns(with_learning, file_name):
     if with_learning:
         learn_ns()
-        save_to_file(neurons, synapses, file_name)
+        save_to_file(file_name)
     else:
         neurons, synapses = load_from_file(file_name)
-    user_input(neurons, synapses)
+    #user_input(neurons, synapses)
 
 def test_image(imagefile_name, ns_file_name):
     image_data = io.imread(imagefile_name, True)
@@ -202,7 +199,7 @@ def test_image(imagefile_name, ns_file_name):
 
 
 def main():
-    ns(True, 'myns.txt')
+    ns(True, 'myns3.txt')
     #test_image('test.png', 'image_brain.txt')
 
 
