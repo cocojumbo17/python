@@ -23,5 +23,20 @@ def main():
             index += 1
     learning_file.close()
 
+def main2():
+    folder = '.\\images\\'
+    files = os.listdir(folder)
+    learning_file = open('learning_data2.bin', 'wb')
+    index = 1
+    for f in files:
+        if '.png' in f:
+            image_data = io.imread(folder + f, True)
+            is_smile = False
+            if index <= 10:
+                is_smile = True
+            pickle.dump(is_smile, learning_file)
+            pickle.dump(image_data, learning_file)
+            index += 1
+    learning_file.close()
 
-main()
+main2()
