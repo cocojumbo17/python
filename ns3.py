@@ -42,8 +42,8 @@ def get_results():
     return neurons_outputs[len(neurons_outputs) - 1]
 
 
-def run_ns_up_out(learning_index):
-    res = np.asarray([training_output[learning_index]])
+def run_ns_up_out(output):
+    res = np.asarray(output)
     out = get_results()
     neurons_deltas[len(neurons_deltas) - 1] = (res - out) * (1 - out) * out
 
@@ -57,7 +57,6 @@ def run_ns_up_for_layer(layer):
     acc = np.sum(weights * deltas, axis=1)
     new_deltas = acc * (1 - out) * out
 
-    temp_delta = np.ones(weights.shape) * deltas
     grads = out.T * deltas
 
     dw = speed_of_learing * grads + moment_of_learing * prev_dw
@@ -72,8 +71,8 @@ def run_ns_up_for_layer(layer):
     neurons_deltas[layer] = new_deltas
 
 
-def run_ns_up(learning_index):
-    run_ns_up_out(learning_index)
+def run_ns_up(out):
+    run_ns_up_out(out)
     count_layers = len(neuron_numbers) - 2
     for layer in range(count_layers, -1, -1):
         run_ns_up_for_layer(layer)
@@ -121,7 +120,7 @@ def learn_ns():
         random.shuffle(learning_indexes)
         for i in learning_indexes:
             run_ns_down(training_input[i])
-            run_ns_up(i)
+            run_ns_up(training_output[i])
         if epoha % 10 == 0:
             errors = []
             for j in range(len(training_input)):
@@ -186,6 +185,27 @@ def ns(with_learning, file_name):
     user_input()
 
 
+def run_ns_gen_for_layer(layer):
+    sums = -np.log(1/neurons_outputs[layer]-1)
+    sums = sums - biases[layer-1]
+    test_result = np.dot(neurons_outputs[layer-1], synaptic_weight[layer-1])
+    print(test_result)
+    total_w = np.sum(synaptic_weight[layer-1],axis=0)
+    k = sums / total_w
+    neurons_outputs[layer-1] = synaptic_weight[layer - 1]*k
+    print(sums)
+
+def run_ns_gen(output):
+    res = np.asarray(output)
+    last_layer = len(neurons_outputs) - 1
+    #neurons_outputs[last_layer] = res
+    for layer in range(last_layer, 0, -1):
+        run_ns_gen_for_layer(layer)
+
+def generate(out, ns_file_name):
+    load_from_file(ns_file_name)
+    run_ns_gen(out)
+
 def test_image(imagefile_name, ns_file_name):
     image_data = io.imread(imagefile_name, True)
     load_from_file(ns_file_name)
@@ -201,7 +221,8 @@ def test_image(imagefile_name, ns_file_name):
 
 def main():
     #ns(True, 'myns3.txt')
-    test_image('test.png', 'image_brain3.txt')
+    #test_image('test.png', 'image_brain3.txt')
+    generate([0.95,0.05], 'image_brain3.txt')
 
 
 if __name__ == '__main__': main()
