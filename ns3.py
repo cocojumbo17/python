@@ -31,6 +31,12 @@ def run_ns_down(input_data):
         else:
             neurons_outputs[i] = sigmoid(np.dot(neurons_outputs[i - 1], synaptic_weight[i - 1]) + biases[i - 1])
 
+def cross_entropy_loss(index):
+    real_out = get_results()
+    ideal_out = training_output[index]
+    e = - np.sum(ideal_out*np.log(real_out))/len(real_out)
+    return e
+
 
 def calc_error(learning_index):
     out = get_results()
@@ -121,13 +127,15 @@ def learn_ns():
         for i in learning_indexes:
             run_ns_down(training_input[i])
             run_ns_up(training_output[i])
+            print(f'error is {cross_entropy_loss(i)}')
+        """
         if epoha % 10 == 0:
             errors = []
             for j in range(len(training_input)):
                 run_ns_down(training_input[j])
                 errors.append(calc_error(j))
             print(f'errors = {errors}')
-            # print('.', end='')
+        """
 
     print('\nfinish learning')
 
@@ -220,9 +228,9 @@ def test_image(imagefile_name, ns_file_name):
 
 
 def main():
-    #ns(True, 'myns3.txt')
+    ns(False, 'myns3.txt')
     #test_image('test.png', 'image_brain3.txt')
-    generate([0.95,0.05], 'image_brain3.txt')
+    #generate([0.95,0.05], 'image_brain3.txt')
 
 
 if __name__ == '__main__': main()
