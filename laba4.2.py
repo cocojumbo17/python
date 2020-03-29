@@ -1,65 +1,113 @@
-def Input():
-     temp, details = list(map(int, input('Num of machines and details to produce:').split()))
-     speed = list(map(int, input('Speeds of machines:').split()))
-     return [details, speed]
+#!/bin/python3
 
+import os
+import sys
+class Heap:
+    def __init__(self, arr):
+        self.arr = arr
+        self.build_min_heap()
 
-def findMax(l):
-    m = l[0]
-    for e in l:
-        if e > m:
-            m = e
-    return m
+    @staticmethod
+    def parent(i):
+        return (i-1) // 2
 
+    @staticmethod
+    def left(i):
+        return i * 2 + 1
 
-def detailsOnNDay(n, speeds):
-    total = 0
-    for s in speeds:
-        total += (n//s)
-    return total
+    @staticmethod
+    def right(i):
+        return i * 2 + 2
 
+    def size(self):
+        return len(self.arr)
 
-def binarySearch(goal, speeds):
-    low_days = 0
-    high_days = findMax(speeds)*goal
-    days = 0
-    while low_days <= high_days:
-        mid_days = (high_days + low_days) // 2
-        details_done = detailsOnNDay(mid_days, speeds)
-        if details_done >= goal:
-            high_days = mid_days-1
-            days = mid_days
+    def insert(self, e):
+        self.arr.append(e)
+        self.sift_up(self.size() - 1)
+
+    def sift_up(self, i):
+        while i > 0:
+            parent = Heap.parent(i)
+            if self.arr[i] < self.arr[parent]:
+                self.arr[parent], self.arr[i] = self.arr[i], self.arr[parent]
+            i = parent
+
+    def min_child(self, i):
+        left = Heap.left(i)
+        right = Heap.right(i)
+        length = self.size()
+        smallest = i
+        if left < length and self.arr[i] > self.arr[left]:
+            smallest = left
+        if right < length and self.arr[smallest] > self.arr[right]:
+            smallest = right
+        return smallest
+
+    def sift_down(self, i):
+        while True:
+            min_child = self.min_child(i)
+            if i == min_child:
+                break
+            self.arr[i], self.arr[min_child] = self.arr[min_child], self.arr[i]
+            i = min_child
+
+    def build_min_heap(self):
+        for i in reversed(range(len(self.arr) // 2)):
+            self.sift_down(i)
+
+    def delete_min(self, is_sift=True):
+        if self.size() == 0:
+            return None
+        self.arr[0], self.arr[-1] = self.arr[-1], self.arr[0]
+        head = self.arr.pop()
+        if is_sift:
+            if self.size() > 0:
+                self.sift_down(0)
         else:
-            low_days = mid_days+1
-    return days
-
-def main2():
-    [goal, speeds] = Input()
-    days = binarySearch(goal, speeds)
-    print(f'{goal} details will be produced in {int(days)} days')
-    for i in range(1, days+1):
-        print(f'{i}: {detailsOnNDay(i, speeds)}')
+            if self.size() > 0:
+                first = self.arr.pop(0)
+                self.arr.append(first)
+                self.sift_up(self.size() - 1)
+                self.sift_down(0)
+        return head
 
 
-# def main():
-#     nGoal = input().split()
-#     n = int(nGoal[0])
-#     goal = int(nGoal[1])
-#     machines = list(map(int, input().rstrip().split()))
-#     low = 1
-#     high = 1e18
-#     while low <= high:
-#         mid = (low + high) // 2
-#         details_done = 0
-#         for i in range(0, n):
-#             details_done += mid // machines[i]
-#             if details_done >= goal:
-#                 break
-#         if details_done >= goal:
-#             high = mid - 1
-#             days = mid
-#         else:
-#             low = mid + 1
-#     print(int(days))
+#
+# Complete the cookies function below.
+#
+def cookies(k, A):
+    heap = Heap(A)
+    operations = 0
 
-main2()
+    if len(A) == 0:
+        print(operations)
+    else:
+        while(A[0] < k):
+            if len(A) <= 1:
+                break
+            operations += 1
+            least_sweet_cookie_1 = heap.delete_min(False)
+            least_sweet_cookie_2 = heap.delete_min(False)
+            sweetness = least_sweet_cookie_1 + 2 * least_sweet_cookie_2
+            heap.insert(sweetness)
+    if A[0] < k:
+        print(-1)
+    else:
+        print(operations)
+
+if __name__ == '__main__':
+
+
+    nk = input().split()
+
+    n = int(nk[0])
+
+    k = int(nk[1])
+
+    A = list(map(int, input().rstrip().split()))
+
+    result = cookies(k, A)
+
+
+
