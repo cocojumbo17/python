@@ -75,6 +75,25 @@ class HashTable:
 
     def resize(self, new_capacity):
         new_arr = [None] * new_capacity
+        for old_node in self:
+            new_index = get_hash(old_node.key) % new_capacity
+            new_node = new_arr[new_index]
+
+            while new_node is not None:
+                if old_node.key == new_node.key:
+                    new_node.value = old_node.value
+                    break
+                new_node = new_node.next
+
+            if new_node is None:
+                new_arr[new_index] = Node(old_node.key, old_node.value, new_arr[new_index])
+        self.buckets = new_arr
+        self.capacity = new_capacity
+
+
+
+    def resize_old(self, new_capacity):
+        new_arr = [None] * new_capacity
         for bucket in self.buckets:
             node = bucket
             while node is not None:
@@ -127,6 +146,7 @@ class HashTable:
             while node is not None:
                 keys.append(node.key)
                 node = node.next
+        keys.sort()
         return keys
 
 

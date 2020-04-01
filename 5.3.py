@@ -23,9 +23,12 @@ class InvertedIndex:
         num_docs = 0
         for word_docs_pair in self.hash_table:
             num_docs += len(word_docs_pair.value)
-        res = num_docs / num_words
-        num = int(res + (0.5 if res > 0 else -0.5))
-        return num
+        if num_words == 0:
+            return 0
+        else:
+            res = num_docs / num_words
+            num = round(res)
+            return num
 
 
 def main():
@@ -52,6 +55,9 @@ def main():
             print(-1)
         else:
             print(val)
+
+    set_B = ii.search('В')
+    print(f'size = {len(set_B)} set={set_B}')
 
     print(ii.get_average_documents_per_key())
 
